@@ -21,6 +21,7 @@ GitHub Actions (02:00 UTC)                 Supabase (Postgres)              Verc
 | `pipeline/rules.py` | **The categorization rules**: edit this to match your naming |
 | `.github/workflows/data-pipeline.yml` | Nightly cron + manual runs / backfills |
 | `web/` | Next.js dashboard (App Router, Tailwind) |
+| `vercel.json` | Vercel project config: the `web` service and its public route |
 
 ## Data model
 
@@ -81,10 +82,16 @@ Then load history once: *Actions → Data pipeline → Run workflow*, with a
 
 ### 3. Vercel
 
-Import the repository and set **Root Directory** to `web`. Add the
-`SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` environment variables (no
+Import the repository and leave **Root Directory** empty: `vercel.json`
+declares one service, `web` (the Next.js app in `web/`), and sends all
+public traffic (`/(.*)`) to it. The pipeline is not a Vercel service; it
+keeps running on GitHub Actions. Add the `SUPABASE_URL` and
+`SUPABASE_SERVICE_ROLE_KEY` environment variables to the project (no
 `NEXT_PUBLIC_` prefix). The page shows spend data to anyone who can open
 it, so put it behind Vercel Deployment Protection or your own authentication.
+
+`vercel build` checks the configuration locally; `vercel dev` runs the
+project the way Vercel routes it.
 
 ## Local development
 
