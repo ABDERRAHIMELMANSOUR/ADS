@@ -8,8 +8,8 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "Marketing Intelligence",
-  description: "Dépenses et conversions Google Ads et Meta Ads par compte et par service.",
+  title: "Rapport Google Ads",
+  description: "Dépenses et conversions Google Ads par compte, service et type, à partir d'un export.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

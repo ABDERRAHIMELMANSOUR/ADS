@@ -1,29 +1,21 @@
-// Spend is stored in the ad accounts' currency; both accounts are assumed to use it.
-const CURRENCY = "EUR";
 const LOCALE = "fr-FR";
 
-const currency = new Intl.NumberFormat(LOCALE, { style: "currency", currency: CURRENCY });
-const count = new Intl.NumberFormat(LOCALE, { maximumFractionDigits: 1 });
-const day = new Intl.DateTimeFormat(LOCALE, {
-  day: "numeric",
-  month: "short",
-  year: "numeric",
-  timeZone: "UTC",
-});
-const timestamp = new Intl.DateTimeFormat(LOCALE, {
-  dateStyle: "medium",
-  timeStyle: "short",
-  timeZone: "Europe/Paris",
-});
+const amount = new Intl.NumberFormat(LOCALE, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const currency = new Intl.NumberFormat(LOCALE, { style: "currency", currency: "EUR" });
+const count = new Intl.NumberFormat(LOCALE, { maximumFractionDigits: 2 });
+const day = new Intl.DateTimeFormat(LOCALE, { day: "2-digit", month: "2-digit", year: "numeric" });
 
-export const formatCurrency = (value: number) => currency.format(value);
+/** For columns whose header already says "(€)". */
+export const formatAmount = (value: number) => amount.format(value);
 
-/** Conversions can be fractional (data-driven attribution in Google Ads). */
+/** A cost per conversion; null (no conversion) shows as a dash. */
+export const formatCost = (value: number | null, { withSymbol = false } = {}) =>
+  value === null ? "—" : withSymbol ? currency.format(value) : amount.format(value);
+
+/** Conversions can be fractional with data-driven attribution. */
 export const formatCount = (value: number) => count.format(value);
 
-export const formatCostPerConversion = (value: number | null) =>
-  value === null ? "—" : currency.format(value);
+export const formatDate = (date: Date) => day.format(date);
 
-export const formatDay = (isoDate: string) => day.format(new Date(`${isoDate}T00:00:00Z`));
-
-export const formatTimestamp = (date: Date) => timestamp.format(date);
+/** "2026-09-30" -> "30/09/2026", without going through time zones. */
+export const formatIsoDate = (isoDate: string) => isoDate.split("-").reverse().join("/");

@@ -1,7 +1,0 @@
-# Runtime dependencies of the data pipeline (python -m pipeline).
-# google-ads drops old Google Ads API versions regularly: bump it at least
-# once a year, or the API will start rejecting requests.
-google-ads==33.0.0
-facebook-business==26.0.2
-supabase==2.31.0
-pandas==3.0.6

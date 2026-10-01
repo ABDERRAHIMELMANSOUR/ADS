@@ -15,10 +15,9 @@ export default function DashboardError({
 
   return (
     <main className="mx-auto flex max-w-6xl flex-col items-start gap-3 px-4 py-10 sm:px-6">
-      <h1 className="text-lg font-semibold text-ink">Impossible de charger les données</h1>
+      <h1 className="text-lg font-semibold text-ink">Une erreur est survenue</h1>
       <p className="text-sm text-ink-secondary">
-        La lecture depuis Supabase a échoué. Vérifiez la configuration (SUPABASE_URL,
-        SUPABASE_SERVICE_ROLE_KEY) et les logs du serveur.
+        La page n&apos;a pas pu s&apos;afficher. Réessayez ; si le problème persiste, rechargez la page.
       </p>
       <button
         type="button"

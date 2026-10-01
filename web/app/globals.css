@@ -9,6 +9,8 @@
   --text-muted: #6f6e69;
   --accent: #2a78d6;
   --accent-contrast: #ffffff;
+  --warning: #fab219;
+  --critical: #c23434;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -21,6 +23,8 @@
     --text-muted: #9a998f;
     --accent: #3987e5;
     --accent-contrast: #ffffff;
+    --warning: #fab219;
+    --critical: #e66767;
   }
 }
 
@@ -33,6 +37,8 @@
   --color-ink-muted: var(--text-muted);
   --color-accent: var(--accent);
   --color-accent-contrast: var(--accent-contrast);
+  --color-warning: var(--warning);
+  --color-critical: var(--critical);
   --font-sans: var(--font-geist-sans);
 }
 
