@@ -1,0 +1,91 @@
+name: Data pipeline
+
+# Nightly Google Ads + Meta Ads -> Supabase sync. It can also be started by hand
+# from the Actions tab ("Run workflow"), for example to backfill a date range.
+on:
+  schedule:
+    # Every night at 02:00 UTC. GitHub cron is always UTC: for 02:00 Paris time
+    # use "0 0 * * *" in summer (UTC+2) or "0 1 * * *" in winter (UTC+1).
+    # GitHub can start scheduled runs a few minutes late at busy times.
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+    inputs:
+      start_date:
+        description: "First day to sync (YYYY-MM-DD). Empty: the last <lookback_days> days."
+        required: false
+        default: ""
+      end_date:
+        description: "Last day to sync (YYYY-MM-DD). Empty: yesterday."
+        required: false
+        default: ""
+      lookback_days:
+        description: "Days to re-sync when start_date is empty."
+        required: false
+        default: "30"
+      sources:
+        description: "Platforms to sync"
+        type: choice
+        options: [all, google_ads, meta_ads]
+        default: all
+      dry_run:
+        description: "Extract and aggregate only, do not write to Supabase"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+# Never run two syncs at once: they would both rewrite the same date window.
+concurrency:
+  group: data-pipeline
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Extract, aggregate, load
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pipeline/requirements*.txt
+
+      - name: Install dependencies
+        run: pip install -r pipeline/requirements-dev.txt
+
+      # Guards against a broken edit of pipeline/rules.py loading bad data.
+      - name: Test classification rules
+        run: python -m pytest pipeline -q
+
+      - name: Run pipeline
+        env:
+          GOOGLE_ADS_DEVELOPER_TOKEN: ${{ secrets.GOOGLE_ADS_DEVELOPER_TOKEN }}
+          GOOGLE_ADS_CLIENT_ID: ${{ secrets.GOOGLE_ADS_CLIENT_ID }}
+          GOOGLE_ADS_CLIENT_SECRET: ${{ secrets.GOOGLE_ADS_CLIENT_SECRET }}
+          GOOGLE_ADS_REFRESH_TOKEN: ${{ secrets.GOOGLE_ADS_REFRESH_TOKEN }}
+          GOOGLE_ADS_LOGIN_CUSTOMER_ID: ${{ secrets.GOOGLE_ADS_LOGIN_CUSTOMER_ID }}
+          GOOGLE_ADS_ACCOUNTS: ${{ secrets.GOOGLE_ADS_ACCOUNTS }}
+          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+          META_APP_ID: ${{ secrets.META_APP_ID }}
+          META_APP_SECRET: ${{ secrets.META_APP_SECRET }}
+          META_AD_ACCOUNTS: ${{ secrets.META_AD_ACCOUNTS }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          # Manual-run inputs are passed as env vars, never interpolated into
+          # the script, so they cannot inject shell code. Empty on schedule.
+          START_DATE: ${{ inputs.start_date }}
+          END_DATE: ${{ inputs.end_date }}
+          LOOKBACK_DAYS: ${{ inputs.lookback_days }}
+          SOURCES: ${{ inputs.sources }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          args=(--lookback-days "${LOOKBACK_DAYS:-30}")
+          if [ -n "$START_DATE" ]; then args+=(--start "$START_DATE"); fi
+          if [ -n "$END_DATE" ]; then args+=(--end "$END_DATE"); fi
+          if [ -n "$SOURCES" ] && [ "$SOURCES" != "all" ]; then args+=(--sources "$SOURCES"); fi
+          if [ "$DRY_RUN" = "true" ]; then args+=(--dry-run); fi
+          python -m pipeline "${args[@]}"
